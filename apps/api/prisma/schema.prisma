@@ -1,0 +1,1476 @@
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum HqRole {
+  SUPER_ADMIN
+  SUPPORT
+  SALES
+  BILLING
+}
+
+enum SchoolType {
+  PRIMARY
+  JSS
+  SSS
+  MIXED
+}
+
+enum BillingCycle {
+  MONTHLY
+  TERMLY
+  ANNUAL
+}
+
+enum DashboardScope {
+  ALL
+  PRIMARY
+  JSS
+  SSS
+}
+
+enum Role {
+  PRINCIPAL
+  ADMIN
+  TEACHER
+  STUDENT
+  PARENT
+  FINANCE
+}
+
+enum StaffType {
+  TEACHING
+  NON_TEACHING
+  SUPPORT
+}
+
+enum EmploymentType {
+  PERMANENT
+  CONTRACT
+  INTERN
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum PromotionStatus {
+  ACTIVE
+  PROMOTED
+  HELD
+  TRANSFERRED
+  GRADUATED
+}
+
+enum AssessmentType {
+  FORMATIVE
+  SUMMATIVE
+  PROJECT
+  EXAM
+}
+
+enum CbcGrade {
+  EE
+  ME
+  AE
+  BE
+}
+
+enum ReportType {
+  TERM_REPORT
+  ANNUAL_REPORT
+}
+
+enum PaymentMethod {
+  MPESA
+  CASH
+  BANK
+  CHEQUE
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  DISPUTED
+}
+
+enum AssignmentType {
+  FORM_TEACHER
+  SUBJECT_TEACHER
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+enum PromotionDecision {
+  PROMOTED
+  HELD
+  TRANSFERRED
+  GRADUATED
+}
+
+enum ExpenseStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum SchoolRole {
+  PRINCIPAL
+  TEACHER
+  STUDENT
+  PARENT
+  FINANCE
+  ADMIN
+}
+
+enum NotificationChannel {
+  IN_APP
+  SMS
+  EMAIL
+  PUSH
+  WHATSAPP
+}
+
+enum NotificationPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model SubscriptionPlan {
+  planId       String       @id @default(uuid()) @map("plan_id")
+  planName     String       @map("plan_name")
+  maxStudents  Int          @map("max_students")
+  maxStaff     Int          @map("max_staff")
+  storageGb    Float        @map("storage_gb")
+  priceKes     Float        @map("price_kes")
+  billingCycle BillingCycle @map("billing_cycle")
+  featuresJson String?      @map("features_json")
+  isActive     Boolean      @default(true) @map("is_active")
+  createdAt    DateTime     @default(now()) @map("created_at")
+
+  tenants Tenant[]
+
+  @@map("subscription_plans")
+}
+
+model PlatformUser {
+  platformUserId String    @id @default(uuid()) @map("platform_user_id")
+  fullName       String    @map("full_name")
+  email          String    @unique
+  passwordHash   String    @map("password_hash")
+  hqRole         HqRole    @map("hq_role")
+  isActive       Boolean   @default(true) @map("is_active")
+  lastLoginAt    DateTime? @map("last_login_at")
+  avatarUrl      String?   @map("avatar_url")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  tenants               Tenant[]                    @relation("TenantOnboardedBy")
+  dashboardAssignments  TenantDashboardAssignment[]
+  featureAssignments    TenantFeatureAssignment[]
+  receivedNotifications Notification[]              @relation("PlatformUserNotifications")
+  auditLogs             AuditLog[]                  @relation("PlatformUserAuditLogs")
+
+  @@map("platform_users")
+}
+
+model Tenant {
+  tenantId       String     @id @default(uuid()) @map("tenant_id")
+  schoolName     String     @map("school_name")
+  subdomain      String     @unique
+  county         String
+  subCounty      String?    @map("sub_county")
+  schoolType     SchoolType @map("school_type")
+  registrationNo String     @unique @map("registration_no")
+  planId         String     @map("plan_id")
+  isActive       Boolean    @default(true) @map("is_active")
+  onboardedAt    DateTime   @default(now()) @map("onboarded_at")
+  onboardedBy    String?    @map("onboarded_by")
+  timezone       String     @default("Africa/Nairobi")
+  logoUrl        String?    @map("logo_url")
+  contactEmail   String     @map("contact_email")
+  contactPhone   String     @map("contact_phone")
+  address        String?
+  motto          String?
+  createdAt      DateTime   @default(now()) @map("created_at")
+  updatedAt      DateTime   @updatedAt @map("updated_at")
+
+  plan                    SubscriptionPlan            @relation(fields: [planId], references: [planId])
+  onboardedUser           PlatformUser?               @relation("TenantOnboardedBy", fields: [onboardedBy], references: [platformUserId])
+  dashboards              TenantDashboardAssignment[]
+  featureAssignments      TenantFeatureAssignment[]
+  visibility              SchoolRoleVisibility[]
+  years                   AcademicYear[]
+  tiers                   EducationTier[]
+  classes                 Class[]
+  subjects                Subject[]
+  users                   User[]
+  staff                   Staff[]
+  students                Student[]
+  parents                 Parent[]
+  terms                   Term[]
+  classSubjectAssignments ClassSubjectAssignment[]
+  classTeacherAssignments ClassTeacherAssignment[]
+  attendance              Attendance[]
+  assignments             Assignment[]
+  marks                   Mark[]
+  cbcCompetencies         CbcCompetency[]
+  portfolios              StudentPortfolio[]
+  reports                 Report[]
+  studentPromotions       StudentPromotion[]
+  feeStructures           FeeStructure[]
+  feePayments             FeePayment[]
+  paymentIntents          PaymentIntent[]
+  paymentAllocations      PaymentAllocation[]
+  receipts                Receipt[]
+  mpesaRequests           MpesaRequest[]
+  mpesaCallbacks          MpesaCallback[]
+  expenses                Expense[]
+  payrolls                Payroll[]
+  timetableEntries        TimetableEntry[]
+  messageThreads          MessageThread[]
+  messageParticipants     MessageParticipant[]
+  messages                Message[]
+  mpesaTransactions       MpesaTransaction[]
+  parentStudentLinks      ParentStudentLink[]
+  notifications           Notification[]
+  auditLogs               AuditLog[]
+  systemEvents            SystemEvent[]
+  chatRooms               ChatRoom[]
+  chatRoomMembers         ChatRoomMember[]
+  chatMessages            ChatMessage[]
+  chatMessageReactions    ChatMessageReaction[]
+  chatMentions            ChatMention[]
+  chatAttachments         ChatAttachment[]
+  chatReadReceipts        ChatReadReceipt[]
+  chatPins                ChatPin[]
+  invitations             Invitation[]
+  chatMuteSettings        ChatMuteSetting[]
+  chatMessageEdits        ChatMessageEdit[]
+  chatMessageDeletes      ChatMessageDelete[]
+
+  @@map("tenants")
+}
+
+model PlatformDashboard {
+  dashboardId   String         @id @default(uuid()) @map("dashboard_id")
+  dashboardKey  String         @unique @map("dashboard_key")
+  dashboardName String         @map("dashboard_name")
+  tierScope     DashboardScope @map("tier_scope")
+  icon          String?
+  description   String?
+  isActive      Boolean        @default(true) @map("is_active")
+
+  features       PlatformFeature[]
+  assignments    TenantDashboardAssignment[]
+  tenantFeatures TenantFeatureAssignment[]
+
+  @@map("platform_dashboards")
+}
+
+model PlatformFeature {
+  featureId   String  @id @default(uuid()) @map("feature_id")
+  featureKey  String  @unique @map("feature_key")
+  featureName String  @map("feature_name")
+  dashboardId String  @map("dashboard_id")
+  moduleGroup String  @map("module_group")
+  isCore      Boolean @default(false) @map("is_core")
+  description String?
+  isActive    Boolean @default(true) @map("is_active")
+
+  dashboard         PlatformDashboard         @relation(fields: [dashboardId], references: [dashboardId])
+  tenantAssignments TenantFeatureAssignment[]
+
+  @@map("platform_features")
+}
+
+model TenantDashboardAssignment {
+  assignmentId String    @id @default(uuid()) @map("assignment_id")
+  tenantId     String    @map("tenant_id")
+  dashboardId  String    @map("dashboard_id")
+  isEnabled    Boolean   @default(true) @map("is_enabled")
+  assignedBy   String    @map("assigned_by")
+  assignedAt   DateTime  @default(now()) @map("assigned_at")
+  expiresAt    DateTime? @map("expires_at")
+  notes        String?
+
+  tenant    Tenant            @relation(fields: [tenantId], references: [tenantId])
+  dashboard PlatformDashboard @relation(fields: [dashboardId], references: [dashboardId])
+  assignee  PlatformUser      @relation(fields: [assignedBy], references: [platformUserId])
+
+  @@unique([tenantId, dashboardId])
+  @@map("tenant_dashboard_assignments")
+}
+
+model TenantFeatureAssignment {
+  tfaId          String    @id @default(uuid()) @map("tfa_id")
+  tenantId       String    @map("tenant_id")
+  dashboardId    String    @map("dashboard_id")
+  featureId      String    @map("feature_id")
+  isEnabled      Boolean   @default(true) @map("is_enabled")
+  enabledByHq    Boolean   @default(true) @map("enabled_by_hq")
+  assignedBy     String    @map("assigned_by")
+  assignedAt     DateTime  @default(now()) @map("assigned_at")
+  lastToggledAt  DateTime? @map("last_toggled_at")
+  lastToggledBy  String?   @map("last_toggled_by")
+  overrideReason String?   @map("override_reason")
+
+  tenant                 Tenant                 @relation(fields: [tenantId], references: [tenantId])
+  dashboard              PlatformDashboard      @relation(fields: [dashboardId], references: [dashboardId])
+  feature                PlatformFeature        @relation(fields: [featureId], references: [featureId])
+  assignee               PlatformUser           @relation(fields: [assignedBy], references: [platformUserId])
+  schoolRoleVisibilities SchoolRoleVisibility[]
+
+  @@unique([tenantId, dashboardId, featureId])
+  @@map("tenant_feature_assignments")
+}
+
+model SchoolRoleVisibility {
+  visibilityId String     @id @default(uuid()) @map("visibility_id")
+  tenantId     String     @map("tenant_id")
+  tfaId        String     @map("tfa_id")
+  roleKey      SchoolRole @map("role_key")
+  isVisible    Boolean    @default(true) @map("is_visible")
+  setBy        String     @map("set_by")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  tenant Tenant                  @relation(fields: [tenantId], references: [tenantId])
+  tfa    TenantFeatureAssignment @relation(fields: [tfaId], references: [tfaId])
+
+  @@unique([tenantId, tfaId, roleKey])
+  @@map("school_role_visibility")
+}
+
+model AcademicYear {
+  yearId    String   @id @default(uuid()) @map("year_id")
+  tenantId  String   @map("tenant_id")
+  yearLabel String   @map("year_label")
+  startDate DateTime @map("start_date")
+  endDate   DateTime @map("end_date")
+  isCurrent Boolean  @default(false) @map("is_current")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  tenant                  Tenant                   @relation(fields: [tenantId], references: [tenantId])
+  terms                   Term[]
+  classes                 Class[]
+  classSubjectAssignments ClassSubjectAssignment[]
+  classTeacherAssignments ClassTeacherAssignment[]
+  promotionsFrom          StudentPromotion[]       @relation("FromYear")
+  promotionsTo            StudentPromotion[]       @relation("ToYear")
+  timetableEntries        TimetableEntry[]
+  feeStructures           FeeStructure[]
+  expenses                Expense[]
+  payroll                 Payroll[]
+
+  @@map("academic_years")
+}
+
+model Term {
+  termId     String   @id @default(uuid()) @map("term_id")
+  tenantId   String   @map("tenant_id")
+  yearId     String   @map("year_id")
+  termNumber Int      @map("term_number")
+  termName   String   @map("term_name")
+  startDate  DateTime @map("start_date")
+  endDate    DateTime @map("end_date")
+  isCurrent  Boolean  @default(false) @map("is_current")
+
+  tenant            Tenant             @relation(fields: [tenantId], references: [tenantId])
+  year              AcademicYear       @relation(fields: [yearId], references: [yearId])
+  attendances       Attendance[]
+  assignments       Assignment[]
+  marks             Mark[]
+  cbcCompetencies   CbcCompetency[]
+  studentPortfolios StudentPortfolio[]
+  reports           Report[]
+  timetableEntries  TimetableEntry[]
+  feeStructures     FeeStructure[]
+
+  @@map("terms")
+}
+
+model EducationTier {
+  tierId    String  @id @default(uuid()) @map("tier_id")
+  tenantId  String  @map("tenant_id")
+  tierKey   String  @map("tier_key")
+  tierName  String  @map("tier_name")
+  gradeFrom String  @map("grade_from")
+  gradeTo   String  @map("grade_to")
+  isActive  Boolean @default(true) @map("is_active")
+
+  tenant        Tenant         @relation(fields: [tenantId], references: [tenantId])
+  classes       Class[]
+  subjects      Subject[]
+  students      Student[]
+  feeStructures FeeStructure[]
+
+  @@map("education_tiers")
+}
+
+model Class {
+  classId   String   @id @default(uuid()) @map("class_id")
+  tenantId  String   @map("tenant_id")
+  tierId    String   @map("tier_id")
+  yearId    String   @map("year_id")
+  grade     String
+  stream    String?
+  className String   @map("class_name")
+  capacity  Int?     @default(40)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  tenant                  Tenant                   @relation(fields: [tenantId], references: [tenantId])
+  tier                    EducationTier            @relation(fields: [tierId], references: [tierId])
+  year                    AcademicYear             @relation(fields: [yearId], references: [yearId])
+  students                Student[]
+  assignments             Assignment[]
+  attendance              Attendance[]
+  classSubjectAssignments ClassSubjectAssignment[]
+  classTeacherAssignments ClassTeacherAssignment[]
+  promotionsFrom          StudentPromotion[]       @relation("FromClass")
+  promotionsTo            StudentPromotion[]       @relation("ToClass")
+  timetableEntries        TimetableEntry[]
+  marks                   Mark[]
+  reports                 Report[]
+  chatRooms               ChatRoom[]
+
+  @@map("classes")
+}
+
+model Subject {
+  subjectId       String  @id @default(uuid()) @map("subject_id")
+  tenantId        String  @map("tenant_id")
+  tierId          String  @map("tier_id")
+  subjectName     String  @map("subject_name")
+  subjectCode     String? @map("subject_code")
+  cbcLearningArea String? @map("cbc_learning_area")
+  isCore          Boolean @default(true) @map("is_core")
+  isActive        Boolean @default(true) @map("is_active")
+
+  tenant                  Tenant                   @relation(fields: [tenantId], references: [tenantId])
+  tier                    EducationTier            @relation(fields: [tierId], references: [tierId])
+  classSubjectAssignments ClassSubjectAssignment[]
+  classTeacherAssignments ClassTeacherAssignment[]
+  assignments             Assignment[]
+  marks                   Mark[]
+  studentPortfolios       StudentPortfolio[]
+  timetableEntries        TimetableEntry[]
+  chatRooms               ChatRoom[]
+
+  @@map("subjects")
+}
+
+model ClassSubjectAssignment {
+  csaId     String  @id @default(uuid()) @map("csa_id")
+  tenantId  String  @map("tenant_id")
+  classId   String  @map("class_id")
+  subjectId String  @map("subject_id")
+  yearId    String  @map("year_id")
+  isActive  Boolean @default(true) @map("is_active")
+
+  tenant  Tenant       @relation(fields: [tenantId], references: [tenantId])
+  class   Class        @relation(fields: [classId], references: [classId])
+  subject Subject      @relation(fields: [subjectId], references: [subjectId])
+  year    AcademicYear @relation(fields: [yearId], references: [yearId])
+
+  @@unique([tenantId, classId, subjectId, yearId])
+  @@map("class_subject_assignments")
+}
+
+model User {
+  userId       String    @id @default(uuid()) @map("user_id")
+  tenantId     String    @map("tenant_id")
+  email        String
+  phone        String?
+  passwordHash String    @map("password_hash")
+  role         Role
+  fullName     String?   @map("full_name")
+  isActive     Boolean   @default(true) @map("is_active")
+  lastLoginAt  DateTime? @map("last_login_at")
+  profileRefId String?   @map("profile_ref_id")
+  avatarUrl    String?   @map("avatar_url")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  tenant                  Tenant               @relation(fields: [tenantId], references: [tenantId])
+  staff                   Staff?
+  student                 Student?
+  parent                  Parent?
+  generatedReports        Report[]             @relation("ReportGeneratedBy")
+  approvedReports         Report[]             @relation("ReportApprovedBy")
+  recordedExpenses        Expense[]            @relation("ExpenseRecordedBy")
+  approvedExpenses        Expense[]            @relation("ExpenseApprovedBy")
+  processedPayrolls       Payroll[]
+  sentMessages            Message[]            @relation("MessageSender")
+  receivedNotifications   Notification[]       @relation("UserNotifications")
+  auditLogs               AuditLog[]           @relation("UserAuditLogs")
+  createdThreads          MessageThread[]      @relation("ThreadCreator")
+  timetableEntriesCreated TimetableEntry[]     @relation("TimetableCreator")
+  markedAttendances       Attendance[]
+  createdAssignments      Assignment[]
+  enteredMarks            Mark[]
+  uploadedPortfolios      StudentPortfolio[]
+  mpesaTransactions       MpesaTransaction[]
+  cbcCompetencies         CbcCompetency[]
+  studentPromotions       StudentPromotion[]
+  feePayments             FeePayment[]
+  messageParticipants     MessageParticipant[]
+  createdInvitations      Invitation[]         @relation("createdInvitations")
+
+  @@unique([tenantId, email])
+  @@map("users")
+}
+
+model Staff {
+  staffId        String         @id @default(uuid()) @map("staff_id")
+  tenantId       String         @map("tenant_id")
+  userId         String?        @unique @map("user_id")
+  tscNumber      String?        @map("tsc_number")
+  fullName       String         @map("full_name")
+  nationalId     String         @unique @map("national_id")
+  staffType      StaffType      @map("staff_type")
+  specialization String?
+  employmentType EmploymentType @map("employment_type")
+  joinedDate     DateTime       @map("joined_date")
+  phone          String?
+  email          String?
+  isActive       Boolean        @default(true) @map("is_active")
+
+  tenant           Tenant                   @relation(fields: [tenantId], references: [tenantId])
+  user             User?                    @relation(fields: [userId], references: [userId])
+  assignments      ClassTeacherAssignment[]
+  payrolls         Payroll[]
+  timetableEntries TimetableEntry[]
+
+  @@map("staff")
+}
+
+model ClassTeacherAssignment {
+  ctaId          String         @id @default(uuid()) @map("cta_id")
+  tenantId       String         @map("tenant_id")
+  classId        String         @map("class_id")
+  staffId        String         @map("staff_id")
+  yearId         String         @map("year_id")
+  assignmentType AssignmentType @map("assignment_type")
+  subjectId      String?        @map("subject_id")
+  assignedAt     DateTime       @default(now()) @map("assigned_at")
+  isActive       Boolean        @default(true) @map("is_active")
+
+  tenant  Tenant       @relation(fields: [tenantId], references: [tenantId])
+  class   Class        @relation(fields: [classId], references: [classId])
+  staff   Staff        @relation(fields: [staffId], references: [staffId])
+  year    AcademicYear @relation(fields: [yearId], references: [yearId])
+  subject Subject?     @relation(fields: [subjectId], references: [subjectId])
+
+  @@unique([tenantId, classId, staffId, yearId, assignmentType, subjectId])
+  @@map("class_teacher_assignments")
+}
+
+model Student {
+  studentId       String          @id @default(uuid()) @map("student_id")
+  tenantId        String          @map("tenant_id")
+  userId          String?         @unique @map("user_id")
+  nemisNumber     String          @unique @map("nemis_number")
+  fullName        String          @map("full_name")
+  dateOfBirth     DateTime        @map("date_of_birth")
+  gender          Gender
+  classId         String          @map("class_id")
+  admissionNumber String          @map("admission_number")
+  admittedDate    DateTime        @map("admitted_date")
+  currentGrade    String          @map("current_grade")
+  tierId          String          @map("tier_id")
+  promotionStatus PromotionStatus @default(ACTIVE) @map("promotion_status")
+  isActive        Boolean         @default(true) @map("is_active")
+
+  tenant            Tenant              @relation(fields: [tenantId], references: [tenantId])
+  user              User?               @relation(fields: [userId], references: [userId])
+  class             Class               @relation(fields: [classId], references: [classId])
+  tier              EducationTier       @relation(fields: [tierId], references: [tierId])
+  marks             Mark[]
+  attendance        Attendance[]
+  portfolios        StudentPortfolio[]
+  competencies      CbcCompetency[]
+  reports           Report[]
+  payments          FeePayment[]
+  parentLinks       ParentStudentLink[]
+  mpesaTransactions MpesaTransaction[]
+  studentPromotions StudentPromotion[]
+  paymentIntents    PaymentIntent[]
+
+  @@map("students")
+}
+
+model Parent {
+  parentId       String  @id @default(uuid()) @map("parent_id")
+  tenantId       String  @map("tenant_id")
+  userId         String? @unique @map("user_id")
+  fullName       String  @map("full_name")
+  nationalId     String? @map("national_id")
+  phonePrimary   String  @map("phone_primary")
+  phoneSecondary String? @map("phone_secondary")
+  relationship   String
+
+  tenant Tenant              @relation(fields: [tenantId], references: [tenantId])
+  user   User?               @relation(fields: [userId], references: [userId])
+  links  ParentStudentLink[]
+
+  @@map("parents")
+}
+
+model ParentStudentLink {
+  linkId           String  @id @default(uuid()) @map("link_id")
+  tenantId         String  @map("tenant_id")
+  parentId         String  @map("parent_id")
+  studentId        String  @map("student_id")
+  isPrimaryContact Boolean @default(false) @map("is_primary_contact")
+  canViewResults   Boolean @default(true) @map("can_view_results")
+  canViewFees      Boolean @default(true) @map("can_view_fees")
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [tenantId])
+  parent  Parent  @relation(fields: [parentId], references: [parentId])
+  student Student @relation(fields: [studentId], references: [studentId])
+
+  @@unique([tenantId, parentId, studentId])
+  @@map("parent_student_links")
+}
+
+model Attendance {
+  attendanceId   String           @id @default(uuid()) @map("attendance_id")
+  tenantId       String           @map("tenant_id")
+  studentId      String           @map("student_id")
+  classId        String           @map("class_id")
+  termId         String           @map("term_id")
+  attendanceDate DateTime         @map("attendance_date")
+  status         AttendanceStatus
+  markedBy       String           @map("marked_by")
+  markedAt       DateTime         @default(now()) @map("marked_at")
+  notes          String?
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [tenantId])
+  student Student @relation(fields: [studentId], references: [studentId])
+  class   Class   @relation(fields: [classId], references: [classId])
+  term    Term    @relation(fields: [termId], references: [termId])
+  marker  User    @relation(fields: [markedBy], references: [userId])
+
+  @@unique([tenantId, studentId, attendanceDate, classId])
+  @@map("attendance")
+}
+
+model Assignment {
+  assignmentId String    @id @default(uuid()) @map("assignment_id")
+  tenantId     String    @map("tenant_id")
+  classId      String    @map("class_id")
+  subjectId    String    @map("subject_id")
+  termId       String    @map("term_id")
+  title        String
+  description  String?
+  dueDate      DateTime? @map("due_date")
+  maxScore     Float?    @default(100) @map("max_score")
+  createdBy    String    @map("created_by")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  isPublished  Boolean   @default(true) @map("is_published")
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [tenantId])
+  class   Class   @relation(fields: [classId], references: [classId])
+  subject Subject @relation(fields: [subjectId], references: [subjectId])
+  term    Term    @relation(fields: [termId], references: [termId])
+  creator User    @relation(fields: [createdBy], references: [userId])
+
+  @@map("assignments")
+}
+
+model Mark {
+  markId         String         @id @default(uuid()) @map("mark_id")
+  tenantId       String         @map("tenant_id")
+  studentId      String         @map("student_id")
+  subjectId      String         @map("subject_id")
+  classId        String         @map("class_id")
+  termId         String         @map("term_id")
+  assessmentType AssessmentType @map("assessment_type")
+  rawScore       Float?         @map("raw_score")
+  cbcGrade       CbcGrade?      @map("cbc_grade")
+  maxScore       Float?         @default(100) @map("max_score")
+  enteredBy      String         @map("entered_by")
+  enteredAt      DateTime       @default(now()) @map("entered_at")
+  isPublished    Boolean        @default(false) @map("is_published")
+  publishedAt    DateTime?      @map("published_at")
+
+  tenant        Tenant  @relation(fields: [tenantId], references: [tenantId])
+  student       Student @relation(fields: [studentId], references: [studentId])
+  subject       Subject @relation(fields: [subjectId], references: [subjectId])
+  class         Class   @relation(fields: [classId], references: [classId])
+  term          Term    @relation(fields: [termId], references: [termId])
+  enteredByUser User    @relation(fields: [enteredBy], references: [userId])
+
+  @@map("marks")
+}
+
+model CbcCompetency {
+  competencyId   String   @id @default(uuid()) @map("competency_id")
+  tenantId       String   @map("tenant_id")
+  studentId      String   @map("student_id")
+  termId         String   @map("term_id")
+  competencyArea String   @map("competency_area")
+  level          CbcGrade
+  notes          String?
+  assessedBy     String   @map("assessed_by")
+  assessedAt     DateTime @default(now()) @map("assessed_at")
+
+  tenant   Tenant  @relation(fields: [tenantId], references: [tenantId])
+  student  Student @relation(fields: [studentId], references: [studentId])
+  term     Term    @relation(fields: [termId], references: [termId])
+  assessor User    @relation(fields: [assessedBy], references: [userId])
+
+  @@map("cbc_competencies")
+}
+
+model StudentPortfolio {
+  portfolioId     String   @id @default(uuid()) @map("portfolio_id")
+  tenantId        String   @map("tenant_id")
+  studentId       String   @map("student_id")
+  subjectId       String?  @map("subject_id")
+  termId          String   @map("term_id")
+  title           String
+  description     String?
+  fileUrl         String?  @map("file_url")
+  fileType        String?  @map("file_type")
+  uploadedBy      String   @map("uploaded_by")
+  uploadedAt      DateTime @default(now()) @map("uploaded_at")
+  isVisibleParent Boolean  @default(true) @map("is_visible_parent")
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [tenantId])
+  student  Student  @relation(fields: [studentId], references: [studentId])
+  subject  Subject? @relation(fields: [subjectId], references: [subjectId])
+  term     Term     @relation(fields: [termId], references: [termId])
+  uploader User     @relation(fields: [uploadedBy], references: [userId])
+
+  @@map("student_portfolios")
+}
+
+model Report {
+  reportId      String     @id @default(uuid()) @map("report_id")
+  tenantId      String     @map("tenant_id")
+  studentId     String     @map("student_id")
+  classId       String     @map("class_id")
+  termId        String     @map("term_id")
+  reportType    ReportType @map("report_type")
+  generatedAt   DateTime   @default(now()) @map("generated_at")
+  generatedBy   String     @map("generated_by")
+  approvedBy    String?    @map("approved_by")
+  approvedAt    DateTime?  @map("approved_at")
+  reportFileUrl String?    @map("report_file_url")
+  isPublished   Boolean    @default(false) @map("is_published")
+  publishedAt   DateTime?  @map("published_at")
+
+  tenant    Tenant  @relation(fields: [tenantId], references: [tenantId])
+  student   Student @relation(fields: [studentId], references: [studentId])
+  class     Class   @relation(fields: [classId], references: [classId])
+  term      Term    @relation(fields: [termId], references: [termId])
+  generator User    @relation("ReportGeneratedBy", fields: [generatedBy], references: [userId])
+  approver  User?   @relation("ReportApprovedBy", fields: [approvedBy], references: [userId])
+
+  @@map("reports")
+}
+
+model StudentPromotion {
+  promotionId String            @id @default(uuid()) @map("promotion_id")
+  tenantId    String            @map("tenant_id")
+  studentId   String            @map("student_id")
+  fromClassId String            @map("from_class_id")
+  toClassId   String?           @map("to_class_id")
+  fromYearId  String            @map("from_year_id")
+  toYearId    String?           @map("to_year_id")
+  autoFlagged Boolean           @default(false) @map("auto_flagged")
+  decision    PromotionDecision
+  decidedBy   String?           @map("decided_by")
+  decidedAt   DateTime?         @map("decided_at")
+  notes       String?
+
+  tenant    Tenant        @relation(fields: [tenantId], references: [tenantId])
+  student   Student       @relation(fields: [studentId], references: [studentId])
+  fromClass Class         @relation("FromClass", fields: [fromClassId], references: [classId])
+  toClass   Class?        @relation("ToClass", fields: [toClassId], references: [classId])
+  fromYear  AcademicYear  @relation("FromYear", fields: [fromYearId], references: [yearId])
+  toYear    AcademicYear? @relation("ToYear", fields: [toYearId], references: [yearId])
+  decider   User?         @relation(fields: [decidedBy], references: [userId])
+
+  @@map("student_promotions")
+}
+
+model FeeStructure {
+  feeStructureId String    @id @default(uuid()) @map("fee_structure_id")
+  tenantId       String    @map("tenant_id")
+  yearId         String    @map("year_id")
+  tierId         String    @map("tier_id")
+  termId         String?   @map("term_id")
+  feeType        String    @map("fee_type")
+  amountKes      Float     @map("amount_kes")
+  isMandatory    Boolean   @default(true) @map("is_mandatory")
+  dueDate        DateTime? @map("due_date")
+
+  tenant             Tenant              @relation(fields: [tenantId], references: [tenantId])
+  year               AcademicYear        @relation(fields: [yearId], references: [yearId])
+  tier               EducationTier       @relation(fields: [tierId], references: [tierId])
+  term               Term?               @relation(fields: [termId], references: [termId])
+  payments           FeePayment[]
+  paymentAllocations PaymentAllocation[]
+  paymentIntents     PaymentIntent[]
+
+  @@map("fee_structures")
+}
+
+model FeePayment {
+  paymentId      String        @id @default(uuid()) @map("payment_id")
+  tenantId       String        @map("tenant_id")
+  studentId      String        @map("student_id")
+  feeStructureId String        @map("fee_structure_id")
+  amountPaid     Float         @map("amount_paid")
+  paymentMethod  PaymentMethod @map("payment_method")
+  mpesaCode      String?       @map("mpesa_code")
+  receiptNumber  String        @unique @map("receipt_number")
+  paidAt         DateTime      @default(now()) @map("paid_at")
+  recordedBy     String        @map("recorded_by")
+  notes          String?
+
+  tenant            Tenant             @relation(fields: [tenantId], references: [tenantId])
+  student           Student            @relation(fields: [studentId], references: [studentId])
+  feeStructure      FeeStructure       @relation(fields: [feeStructureId], references: [feeStructureId])
+  recorder          User               @relation(fields: [recordedBy], references: [userId])
+  receipts          Receipt[]
+  mpesaTransactions MpesaTransaction[]
+  paymentIntent     PaymentIntent?
+
+  @@map("fee_payments")
+}
+
+model PaymentIntent {
+  paymentIntentId   String    @id @default(uuid()) @map("payment_intent_id")
+  tenantId          String    @map("tenant_id")
+  studentId         String    @map("student_id")
+  feeStructureId    String?   @map("fee_structure_id")
+  feePaymentId      String?   @unique @map("fee_payment_id")
+  amount            Float
+  currency          String    @default("KES")
+  paymentMethod     String?   @map("payment_method")
+  provider          String?
+  status            String
+  referenceCode     String    @unique @map("reference_code")
+  providerReference String?   @map("provider_reference")
+  phoneNumber       String?   @map("phone_number")
+  metadata          Json?
+  expiresAt         DateTime? @map("expires_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  tenant         Tenant              @relation(fields: [tenantId], references: [tenantId])
+  student        Student             @relation(fields: [studentId], references: [studentId])
+  feeStructure   FeeStructure?       @relation(fields: [feeStructureId], references: [feeStructureId])
+  feePayment     FeePayment?         @relation(fields: [feePaymentId], references: [paymentId])
+  allocations    PaymentAllocation[]
+  mpesaRequests  MpesaRequest[]
+  mpesaCallbacks MpesaCallback[]
+
+  @@index([tenantId, studentId, status])
+  @@map("payment_intents")
+}
+
+model PaymentAllocation {
+  paymentAllocationId String   @id @default(uuid()) @map("payment_allocation_id")
+  tenantId            String   @map("tenant_id")
+  paymentIntentId     String   @map("payment_intent_id")
+  feeStructureId      String   @map("fee_structure_id")
+  amount              Float
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  tenant        Tenant        @relation(fields: [tenantId], references: [tenantId])
+  paymentIntent PaymentIntent @relation(fields: [paymentIntentId], references: [paymentIntentId])
+  feeStructure  FeeStructure  @relation(fields: [feeStructureId], references: [feeStructureId])
+
+  @@map("payment_allocations")
+}
+
+model Receipt {
+  receiptId        String   @id @default(uuid()) @map("receipt_id")
+  tenantId         String   @map("tenant_id")
+  paymentId        String   @unique @map("payment_id")
+  receiptNumber    String   @unique @map("receipt_number")
+  pdfUrl           String?  @map("pdf_url")
+  verificationCode String?  @map("verification_code")
+  qrCodeUrl        String?  @map("qr_code_url")
+  generatedAt      DateTime @default(now()) @map("generated_at")
+
+  tenant  Tenant     @relation(fields: [tenantId], references: [tenantId])
+  payment FeePayment @relation(fields: [paymentId], references: [paymentId])
+
+  @@map("receipts")
+}
+
+model MpesaRequest {
+  requestId         String   @id @default(uuid()) @map("request_id")
+  tenantId          String   @map("tenant_id")
+  paymentIntentId   String?  @unique @map("payment_intent_id")
+  merchantRequestId String?  @map("merchant_request_id")
+  checkoutRequestId String?  @unique @map("checkout_request_id")
+  phoneNumber       String   @map("phone_number")
+  amount            Float
+  payload           Json?
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  tenant        Tenant         @relation(fields: [tenantId], references: [tenantId])
+  paymentIntent PaymentIntent? @relation(fields: [paymentIntentId], references: [paymentIntentId])
+
+  @@map("mpesa_requests")
+}
+
+model MpesaCallback {
+  callbackId         String    @id @default(uuid()) @map("callback_id")
+  tenantId           String    @map("tenant_id")
+  paymentIntentId    String?   @map("payment_intent_id")
+  mpesaReceiptNumber String?   @unique @map("mpesa_receipt_number")
+  checkoutRequestId  String?   @unique @map("checkout_request_id")
+  callbackPayload    Json      @map("callback_payload")
+  receivedAt         DateTime  @default(now()) @map("received_at")
+  processedAt        DateTime? @map("processed_at")
+  resultCode         Int?      @map("result_code")
+  resultDesc         String?   @map("result_desc")
+
+  tenant        Tenant         @relation(fields: [tenantId], references: [tenantId])
+  paymentIntent PaymentIntent? @relation(fields: [paymentIntentId], references: [paymentIntentId])
+
+  @@map("mpesa_callbacks")
+}
+
+model Expense {
+  expenseId   String        @id @default(uuid()) @map("expense_id")
+  tenantId    String        @map("tenant_id")
+  yearId      String        @map("year_id")
+  category    String
+  description String
+  amountKes   Float         @map("amount_kes")
+  expenseDate DateTime      @map("expense_date")
+  receiptUrl  String?       @map("receipt_url")
+  recordedBy  String        @map("recorded_by")
+  approvedBy  String?       @map("approved_by")
+  status      ExpenseStatus
+
+  tenant   Tenant       @relation(fields: [tenantId], references: [tenantId])
+  year     AcademicYear @relation(fields: [yearId], references: [yearId])
+  recorder User         @relation("ExpenseRecordedBy", fields: [recordedBy], references: [userId])
+  approver User?        @relation("ExpenseApprovedBy", fields: [approvedBy], references: [userId])
+
+  @@map("expenses")
+}
+
+model Payroll {
+  payrollId     String        @id @default(uuid()) @map("payroll_id")
+  tenantId      String        @map("tenant_id")
+  staffId       String        @map("staff_id")
+  yearId        String        @map("year_id")
+  month         Int
+  grossSalary   Float         @map("gross_salary")
+  deductions    Float         @default(0)
+  netSalary     Float         @map("net_salary")
+  paymentStatus PaymentStatus @default(PENDING) @map("payment_status")
+  paidAt        DateTime?     @map("paid_at")
+  processedBy   String        @map("processed_by")
+
+  tenant      Tenant       @relation(fields: [tenantId], references: [tenantId])
+  staffMember Staff        @relation(fields: [staffId], references: [staffId])
+  year        AcademicYear @relation(fields: [yearId], references: [yearId])
+  processor   User         @relation(fields: [processedBy], references: [userId])
+
+  @@map("payroll")
+}
+
+model TimetableEntry {
+  timetableEntryId String   @id @default(uuid()) @map("timetable_entry_id")
+  tenantId         String   @map("tenant_id")
+  yearId           String   @map("year_id")
+  termId           String   @map("term_id")
+  classId          String   @map("class_id")
+  subjectId        String   @map("subject_id")
+  staffId          String?  @map("staff_id")
+  dayOfWeek        Int      @map("day_of_week")
+  startTime        String   @map("start_time")
+  endTime          String   @map("end_time")
+  room             String?
+  isActive         Boolean  @default(true) @map("is_active")
+  createdBy        String   @map("created_by")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  tenant      Tenant       @relation(fields: [tenantId], references: [tenantId])
+  year        AcademicYear @relation(fields: [yearId], references: [yearId])
+  term        Term         @relation(fields: [termId], references: [termId])
+  class       Class        @relation(fields: [classId], references: [classId])
+  subject     Subject      @relation(fields: [subjectId], references: [subjectId])
+  staffMember Staff?       @relation(fields: [staffId], references: [staffId])
+  creator     User         @relation("TimetableCreator", fields: [createdBy], references: [userId])
+
+  @@map("timetable_entries")
+}
+
+model MessageThread {
+  threadId   String   @id @default(uuid()) @map("thread_id")
+  tenantId   String   @map("tenant_id")
+  subject    String
+  createdBy  String   @map("created_by")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  isArchived Boolean  @default(false) @map("is_archived")
+
+  tenant       Tenant               @relation(fields: [tenantId], references: [tenantId])
+  creator      User                 @relation("ThreadCreator", fields: [createdBy], references: [userId])
+  participants MessageParticipant[]
+  messages     Message[]
+
+  @@map("message_threads")
+}
+
+model MessageParticipant {
+  participantId String   @id @default(uuid()) @map("participant_id")
+  tenantId      String   @map("tenant_id")
+  threadId      String   @map("thread_id")
+  userId        String   @map("user_id")
+  roleLabel     String?  @map("role_label")
+  joinedAt      DateTime @default(now()) @map("joined_at")
+
+  tenant Tenant        @relation(fields: [tenantId], references: [tenantId])
+  thread MessageThread @relation(fields: [threadId], references: [threadId])
+  user   User          @relation(fields: [userId], references: [userId])
+
+  @@unique([threadId, userId])
+  @@map("message_participants")
+}
+
+model Message {
+  messageId String    @id @default(uuid()) @map("message_id")
+  tenantId  String    @map("tenant_id")
+  threadId  String    @map("thread_id")
+  senderId  String    @map("sender_id")
+  body      String
+  sentAt    DateTime  @default(now()) @map("sent_at")
+  isRead    Boolean   @default(false) @map("is_read")
+  readAt    DateTime? @map("read_at")
+
+  tenant Tenant        @relation(fields: [tenantId], references: [tenantId])
+  thread MessageThread @relation(fields: [threadId], references: [threadId])
+  sender User          @relation("MessageSender", fields: [senderId], references: [userId])
+
+  @@map("messages")
+}
+
+model Notification {
+  notificationId          String               @id @default(uuid()) @map("notification_id")
+  tenantId                String?              @map("tenant_id")
+  recipientUserId         String?              @map("recipient_user_id")
+  recipientPlatformUserId String?              @map("recipient_platform_user_id")
+  type                    String               @map("type")
+  title                   String
+  message                 String               @map("message")
+  priority                NotificationPriority @default(MEDIUM)
+  channel                 NotificationChannel  @default(IN_APP)
+  isRead                  Boolean              @default(false) @map("is_read")
+  sentAt                  DateTime             @default(now()) @map("sent_at")
+  readAt                  DateTime?            @map("read_at")
+  relatedType             String?              @map("related_type")
+  relatedId               String?              @map("related_id")
+
+  tenant                Tenant?       @relation(fields: [tenantId], references: [tenantId])
+  recipientUser         User?         @relation("UserNotifications", fields: [recipientUserId], references: [userId])
+  recipientPlatformUser PlatformUser? @relation("PlatformUserNotifications", fields: [recipientPlatformUserId], references: [platformUserId])
+
+  @@index([tenantId, recipientUserId, isRead])
+  @@index([recipientPlatformUserId, isRead])
+  @@index([sentAt])
+  @@map("notifications")
+}
+
+model NotificationTemplate {
+  templateId    String               @id @default(uuid()) @map("template_id")
+  templateKey   String               @unique @map("template_key")
+  titleTemplate String               @map("title_template")
+  bodyTemplate  String               @map("body_template")
+  channel       NotificationChannel  @default(IN_APP)
+  priority      NotificationPriority @default(MEDIUM)
+  isActive      Boolean              @default(true) @map("is_active")
+  createdAt     DateTime             @default(now()) @map("created_at")
+  updatedAt     DateTime             @updatedAt @map("updated_at")
+
+  @@map("notification_templates")
+}
+
+model AuditLog {
+  auditId        String   @id @default(uuid()) @map("audit_id")
+  tenantId       String?  @map("tenant_id")
+  userId         String?  @map("user_id")
+  platformUserId String?  @map("platform_user_id")
+  action         String
+  entityType     String   @map("entity_type")
+  entityId       String?  @map("entity_id")
+  oldValues      Json?    @map("old_values")
+  newValues      Json?    @map("new_values")
+  ipAddress      String?  @map("ip_address")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  tenant       Tenant?       @relation(fields: [tenantId], references: [tenantId])
+  user         User?         @relation("UserAuditLogs", fields: [userId], references: [userId])
+  platformUser PlatformUser? @relation("PlatformUserAuditLogs", fields: [platformUserId], references: [platformUserId])
+
+  @@index([tenantId, createdAt])
+  @@index([userId, createdAt])
+  @@index([platformUserId, createdAt])
+  @@map("audit_logs")
+}
+
+model SystemEvent {
+  eventId     String    @id @default(uuid()) @map("event_id")
+  tenantId    String?   @map("tenant_id")
+  eventType   String    @map("event_type")
+  payload     Json
+  processed   Boolean   @default(false)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  processedAt DateTime? @map("processed_at")
+
+  tenant Tenant? @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId, eventType, processed])
+  @@map("system_events")
+}
+
+model ChatRoom {
+  roomId                  String   @id @default(uuid()) @map("room_id")
+  tenantId                String   @map("tenant_id")
+  roomKey                 String   @unique @map("room_key")
+  roomType                String   @map("room_type")
+  name                    String
+  description             String?
+  tierKey                 String?  @map("tier_key")
+  classId                 String?  @map("class_id")
+  subjectId               String?  @map("subject_id")
+  isPinned                Boolean  @default(false) @map("is_pinned")
+  isArchived              Boolean  @default(false) @map("is_archived")
+  createdByUserId         String?  @map("created_by_user_id")
+  createdByPlatformUserId String?  @map("created_by_platform_user_id")
+  createdAt               DateTime @default(now()) @map("created_at")
+  updatedAt               DateTime @updatedAt @map("updated_at")
+
+  tenant       Tenant            @relation(fields: [tenantId], references: [tenantId])
+  class        Class?            @relation(fields: [classId], references: [classId])
+  subject      Subject?          @relation(fields: [subjectId], references: [subjectId])
+  members      ChatRoomMember[]
+  messages     ChatMessage[]
+  pins         ChatPin[]
+  muteSettings ChatMuteSetting[]
+
+  @@index([tenantId, roomType, isArchived])
+  @@index([tenantId, createdAt])
+  @@map("chat_rooms")
+}
+
+model ChatRoomMember {
+  memberId       String    @id @default(uuid()) @map("member_id")
+  tenantId       String    @map("tenant_id")
+  roomId         String    @map("room_id")
+  userId         String?   @map("user_id")
+  platformUserId String?   @map("platform_user_id")
+  roleLabel      String?
+  canSend        Boolean   @default(true) @map("can_send")
+  canViewHistory Boolean   @default(true) @map("can_view_history")
+  isMuted        Boolean   @default(false) @map("is_muted")
+  joinedAt       DateTime  @default(now()) @map("joined_at")
+  lastReadAt     DateTime? @map("last_read_at")
+  archivedAt     DateTime? @map("archived_at")
+
+  tenant Tenant   @relation(fields: [tenantId], references: [tenantId])
+  room   ChatRoom @relation(fields: [roomId], references: [roomId])
+
+  @@unique([roomId, userId, platformUserId])
+  @@index([tenantId, roomId])
+  @@map("chat_room_members")
+}
+
+model ChatMessage {
+  messageId            String    @id @default(uuid()) @map("message_id")
+  tenantId             String    @map("tenant_id")
+  roomId               String    @map("room_id")
+  senderUserId         String?   @map("sender_user_id")
+  senderPlatformUserId String?   @map("sender_platform_user_id")
+  messageType          String    @default("TEXT") @map("message_type")
+  content              String?
+  fileUrl              String?   @map("file_url")
+  fileType             String?   @map("file_type")
+  fileSize             Int?      @map("file_size")
+  metadata             Json?
+  replyToMessageId     String?   @map("reply_to_message_id")
+  isDeleted            Boolean   @default(false) @map("is_deleted")
+  deletedAt            DateTime? @map("deleted_at")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  tenant       Tenant                @relation(fields: [tenantId], references: [tenantId])
+  room         ChatRoom              @relation(fields: [roomId], references: [roomId])
+  replyTo      ChatMessage?          @relation("ChatMessageReplies", fields: [replyToMessageId], references: [messageId])
+  replies      ChatMessage[]         @relation("ChatMessageReplies")
+  reactions    ChatMessageReaction[]
+  mentions     ChatMention[]
+  attachments  ChatAttachment[]
+  readReceipts ChatReadReceipt[]
+  edits        ChatMessageEdit[]
+  deletions    ChatMessageDelete[]
+  pins         ChatPin[]
+
+  @@index([tenantId, roomId, createdAt])
+  @@index([tenantId, senderUserId, createdAt])
+  @@index([tenantId, senderPlatformUserId, createdAt])
+  @@map("chat_messages")
+}
+
+model ChatMessageReaction {
+  reactionId     String   @id @default(uuid()) @map("reaction_id")
+  tenantId       String   @map("tenant_id")
+  messageId      String   @map("message_id")
+  userId         String?  @map("user_id")
+  platformUserId String?  @map("platform_user_id")
+  emoji          String
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  tenant  Tenant      @relation(fields: [tenantId], references: [tenantId])
+  message ChatMessage @relation(fields: [messageId], references: [messageId])
+
+  @@unique([messageId, userId, platformUserId, emoji])
+  @@index([tenantId, messageId])
+  @@map("chat_message_reactions")
+}
+
+model ChatMention {
+  mentionId               String   @id @default(uuid()) @map("mention_id")
+  tenantId                String   @map("tenant_id")
+  messageId               String   @map("message_id")
+  mentionedUserId         String?  @map("mentioned_user_id")
+  mentionedPlatformUserId String?  @map("mentioned_platform_user_id")
+  createdAt               DateTime @default(now()) @map("created_at")
+
+  tenant  Tenant      @relation(fields: [tenantId], references: [tenantId])
+  message ChatMessage @relation(fields: [messageId], references: [messageId])
+
+  @@index([tenantId, mentionedUserId, createdAt])
+  @@index([tenantId, mentionedPlatformUserId, createdAt])
+  @@map("chat_mentions")
+}
+
+model ChatAttachment {
+  attachmentId String   @id @default(uuid()) @map("attachment_id")
+  tenantId     String   @map("tenant_id")
+  messageId    String   @map("message_id")
+  fileUrl      String   @map("file_url")
+  fileType     String?  @map("file_type")
+  fileName     String?  @map("file_name")
+  fileSize     Int?     @map("file_size")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  tenant  Tenant      @relation(fields: [tenantId], references: [tenantId])
+  message ChatMessage @relation(fields: [messageId], references: [messageId])
+
+  @@index([tenantId, messageId])
+  @@map("chat_attachments")
+}
+
+model ChatReadReceipt {
+  receiptId      String   @id @default(uuid()) @map("receipt_id")
+  tenantId       String   @map("tenant_id")
+  messageId      String   @map("message_id")
+  userId         String?  @map("user_id")
+  platformUserId String?  @map("platform_user_id")
+  readAt         DateTime @default(now()) @map("read_at")
+
+  tenant  Tenant      @relation(fields: [tenantId], references: [tenantId])
+  message ChatMessage @relation(fields: [messageId], references: [messageId])
+
+  @@unique([messageId, userId, platformUserId])
+  @@index([tenantId, messageId, readAt])
+  @@map("chat_read_receipts")
+}
+
+model ChatPin {
+  pinId                  String   @id @default(uuid()) @map("pin_id")
+  tenantId               String   @map("tenant_id")
+  roomId                 String   @map("room_id")
+  messageId              String   @map("message_id")
+  pinnedByUserId         String?  @map("pinned_by_user_id")
+  pinnedByPlatformUserId String?  @map("pinned_by_platform_user_id")
+  createdAt              DateTime @default(now()) @map("created_at")
+
+  tenant  Tenant      @relation(fields: [tenantId], references: [tenantId])
+  room    ChatRoom    @relation(fields: [roomId], references: [roomId])
+  message ChatMessage @relation(fields: [messageId], references: [messageId])
+
+  @@index([tenantId, roomId])
+  @@map("chat_pins")
+}
+
+model ChatMuteSetting {
+  muteId         String    @id @default(uuid()) @map("mute_id")
+  tenantId       String    @map("tenant_id")
+  roomId         String    @map("room_id")
+  userId         String?   @map("user_id")
+  platformUserId String?   @map("platform_user_id")
+  mutedUntil     DateTime? @map("muted_until")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  tenant Tenant   @relation(fields: [tenantId], references: [tenantId])
+  room   ChatRoom @relation(fields: [roomId], references: [roomId])
+
+  @@unique([roomId, userId, platformUserId])
+  @@map("chat_mute_settings")
+}
+
+model ChatMessageEdit {
+  editId               String   @id @default(uuid()) @map("edit_id")
+  tenantId             String   @map("tenant_id")
+  messageId            String   @map("message_id")
+  editorUserId         String?  @map("editor_user_id")
+  editorPlatformUserId String?  @map("editor_platform_user_id")
+  newContent           String   @map("new_content")
+  editedAt             DateTime @default(now()) @map("edited_at")
+
+  tenant  Tenant      @relation(fields: [tenantId], references: [tenantId])
+  message ChatMessage @relation(fields: [messageId], references: [messageId])
+
+  @@index([tenantId, messageId, editedAt])
+  @@map("chat_message_edits")
+}
+
+model ChatMessageDelete {
+  deleteId                String   @id @default(uuid()) @map("delete_id")
+  tenantId                String   @map("tenant_id")
+  messageId               String   @map("message_id")
+  deletedByUserId         String?  @map("deleted_by_user_id")
+  deletedByPlatformUserId String?  @map("deleted_by_platform_user_id")
+  reason                  String?
+  deletedAt               DateTime @default(now()) @map("deleted_at")
+
+  tenant  Tenant      @relation(fields: [tenantId], references: [tenantId])
+  message ChatMessage @relation(fields: [messageId], references: [messageId])
+
+  @@index([tenantId, messageId, deletedAt])
+  @@map("chat_message_deletes")
+}
+
+model MpesaTransaction {
+  transactionId String   @id @default(uuid()) @map("transaction_id")
+  tenantId      String   @map("tenant_id")
+  paymentId     String?  @map("payment_id")
+  studentId     String?  @map("student_id")
+  phoneNumber   String   @map("phone_number")
+  amount        Float
+  mpesaCode     String?  @map("mpesa_code")
+  status        String
+  rawPayload    String?  @map("raw_payload")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  tenant     Tenant      @relation(fields: [tenantId], references: [tenantId])
+  payment    FeePayment? @relation(fields: [paymentId], references: [paymentId])
+  student    Student?    @relation(fields: [studentId], references: [studentId])
+  user       User?       @relation(fields: [userUserId], references: [userId])
+  userUserId String?
+
+  @@map("mpesa_transactions")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  email     String
+  expiresAt DateTime @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("password_reset_tokens")
+}
+
+// ── 2FA / Security ──────────────────────────────────────────────────────────
+
+model TwoFactorSetup {
+  twoFaId          String    @id @default(uuid()) @map("two_fa_id")
+  userId           String?   @unique @map("user_id")
+  platformUserId   String?   @unique @map("platform_user_id")
+  secret           String
+  isEnabled        Boolean   @default(false) @map("is_enabled")
+  setupCompletedAt DateTime? @map("setup_completed_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  @@map("two_factor_setups")
+}
+
+model TwoFactorRecoveryCode {
+  codeId    String    @id @default(uuid()) @map("code_id")
+  userId    String?   @map("user_id")
+  platformUserId String? @map("platform_user_id")
+  codeHash  String    @map("code_hash")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@map("two_factor_recovery_codes")
+}
+
+model TrustedDevice {
+  deviceId     String   @id @default(uuid()) @map("device_id")
+  userId       String?  @map("user_id")
+  platformUserId String? @map("platform_user_id")
+  deviceToken  String   @unique @map("device_token")
+  userAgent    String?  @map("user_agent")
+  expiresAt    DateTime @map("expires_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("trusted_devices")
+}
+
+// ── Invitation System ────────────────────────────────────────────────────────
+
+model Invitation {
+  invitationId String    @id @default(uuid()) @map("invitation_id")
+  tenantId     String    @map("tenant_id")
+  email        String
+  fullName     String    @map("full_name")
+  role         Role
+  tokenHash    String    @unique @map("token_hash")
+  isUsed       Boolean   @default(false) @map("is_used")
+  expiresAt    DateTime  @map("expires_at")
+  createdBy    String    @map("created_by")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  usedAt       DateTime? @map("used_at")
+  additionalData Json?   @map("additional_data")
+
+  tenant Tenant @relation(fields: [tenantId], references: [tenantId])
+  creator User  @relation(fields: [createdBy], references: [userId], name: "createdInvitations")
+
+  @@map("invitations")
+}
+
+
+// ── AI Bot ──────────────────────────────────────────────────────────────────
+
+model BotConversation {
+  conversationId String   @id @default(uuid()) @map("conversation_id")
+  tenantId       String   @map("tenant_id")
+  userId         String   @map("user_id")
+  role           String
+  messages       Json     @default("[]")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("bot_conversations")
+}

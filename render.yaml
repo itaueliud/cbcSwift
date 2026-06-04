@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: cbcswift-api
+    env: node
+    buildCommand: "cd apps/api && npm install && npm run build && npm run prisma:generate"
+    startCommand: "cd apps/api && npm start"
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "4000"
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: WEB_ORIGIN
+        sync: false

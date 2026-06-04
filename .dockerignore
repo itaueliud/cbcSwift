@@ -1,0 +1,32 @@
+# Source control
+.git
+.gitignore
+
+# Node
+node_modules
+*/node_modules
+**/.next
+**/dist
+**/build
+
+# Env files (injected via docker-compose)
+.env*
+!.env.example
+
+# Logs
+*.log
+logs/
+
+# OS / IDE
+.DS_Store
+.vscode
+.idea
+Thumbs.db
+
+# Tests
+**/__tests__
+**/*.test.*
+**/*.spec.*
+
+# Profile / local data
+profile/

@@ -1,0 +1,100 @@
+services:
+  # ── PostgreSQL ─────────────────────────────────────────────────────────────
+  postgres:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-cbcnexus}
+      POSTGRES_USER: ${POSTGRES_USER:-cbcnexus}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-localpass}
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cbcnexus} -d ${POSTGRES_DB:-cbcnexus}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ── Redis ──────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ── API (NestJS/Express + Prisma) ─────────────────────────────────────────
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-cbcnexus}:${POSTGRES_PASSWORD:-localpass}@postgres:5432/${POSTGRES_DB:-cbcnexus}
+      JWT_SECRET: ${JWT_SECRET:-CBCNexus-JWT-Secret-Key-2025!}
+      WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:8080}
+      PORT: ${API_PORT:-4000}
+      REDIS_URL: redis://redis:6379
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY:-}
+      SENDGRID_FROM_EMAIL: ${SENDGRID_FROM_EMAIL:-noreply@cbcswift.local}
+      SENDGRID_FROM_NAME: ${SENDGRID_FROM_NAME:-CBC Swift}
+      MPESA_CONSUMER_KEY: ${MPESA_CONSUMER_KEY:-}
+      MPESA_CONSUMER_SECRET: ${MPESA_CONSUMER_SECRET:-}
+      MPESA_SHORTCODE: ${MPESA_SHORTCODE:-174379}
+      MPESA_PASSKEY: ${MPESA_PASSKEY:-}
+      MPESA_ENV: ${MPESA_ENV:-sandbox}
+      MPESA_CALLBACK_URL: ${MPESA_CALLBACK_URL:-http://localhost:8080/api/finance/mpesa/webhook}
+    ports:
+      - "4001:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4000/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  # ── Next.js Frontend ───────────────────────────────────────────────────────
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: /api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: /api
+    ports:
+      - "3001:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+
+  # ── Nginx Reverse Proxy ────────────────────────────────────────────────────
+  nginx:
+    image: nginx:1.25-alpine
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+    depends_on:
+      - web
+      - api
+
+volumes:
+  pgdata:

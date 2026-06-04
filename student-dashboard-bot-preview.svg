@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760">
+  <defs>
+    <style>
+      .bg { fill: #f8fafc; }
+      .panel { fill: #ffffff; stroke: #e6e9ee; rx:14; ry:14; }
+      .accent { fill: #1d4ed8; }
+      .accent-soft { fill: #e0f2fe; }
+      .text-dark { fill: #0f172a; font-family: Inter, Arial, sans-serif; }
+      .text-muted { fill: #64748b; font-family: Inter, Arial, sans-serif; }
+      .title { font-size: 22px; font-weight: 700; }
+      .subtitle { font-size: 14px; }
+      .small { font-size: 12px; }
+      .badge { fill: #eff6ff; stroke: #bfdbfe; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1200" height="760"/>
+
+  <rect class="panel" x="32" y="32" width="1136" height="128"/>
+  <text x="52" y="72" class="text-dark title">Student Dashboard</text>
+  <text x="52" y="96" class="text-muted subtitle">Your CBC learning overview, assignments, results and portfolio.</text>
+  <rect x="1020" y="54" width="120" height="40" rx="12" class="badge"/>
+  <text x="1080" y="80" text-anchor="middle" class="text-dark small">Student</text>
+
+  <g transform="translate(40,180)">
+    <rect class="panel" x="0" y="0" width="350" height="120"/>
+    <text x="24" y="32" class="text-muted small">Assignments due</text>
+    <text x="24" y="70" class="text-dark title">8</text>
+    <rect x="0" y="140" width="350" height="120" class="panel"/>
+    <text x="24" y="172" class="text-muted small">Current grade</text>
+    <text x="24" y="210" class="text-dark title">ME</text>
+    <text x="24" y="232" class="text-muted small">Meets expectation</text>
+  </g>
+
+  <g transform="translate(410,180)">
+    <rect class="panel" x="0" y="0" width="760" height="280"/>
+    <text x="24" y="34" class="text-dark subtitle">Latest results</text>
+    <rect x="24" y="54" width="712" height="200" fill="#f8fafc" rx="12"/>
+    <g class="text-muted small" font-family="Inter, Arial, sans-serif">
+      <text x="40" y="80">Subject</text>
+      <text x="320" y="80">Grade</text>
+      <text x="470" y="80">Term</text>
+      <text x="620" y="80">Date</text>
+    </g>
+    <g class="text-dark" font-family="Inter, Arial, sans-serif" font-size="13">
+      <text x="40" y="112">Mathematics</text>
+      <text x="320" y="112" fill="#2563eb">ME</text>
+      <text x="470" y="112">Term 2</text>
+      <text x="620" y="112">2026-06-01</text>
+
+      <text x="40" y="146">English</text>
+      <text x="320" y="146" fill="#059669">EE</text>
+      <text x="470" y="146">Term 2</text>
+      <text x="620" y="146">2026-06-01</text>
+
+      <text x="40" y="180">Science</text>
+      <text x="320" y="180" fill="#f59e0b">AE</text>
+      <text x="470" y="180">Term 2</text>
+      <text x="620" y="180">2026-06-01</text>
+
+      <text x="40" y="214">History</text>
+      <text x="320" y="214" fill="#dc2626">BE</text>
+      <text x="470" y="214">Term 2</text>
+      <text x="620" y="214">2026-06-01</text>
+    </g>
+  </g>
+
+  <g transform="translate(40,340)">
+    <rect class="panel" x="0" y="0" width="350" height="240"/>
+    <text x="24" y="34" class="text-dark subtitle">Portfolio highlights</text>
+    <rect x="24" y="60" width="302" height="44" rx="12" fill="#eff6ff"/>
+    <text x="40" y="90" class="text-dark small">Science fair project</text>
+    <rect x="24" y="118" width="302" height="44" rx="12" fill="#fef3c7"/>
+    <text x="40" y="148" class="text-dark small">Art evidence upload</text>
+    <rect x="24" y="176" width="302" height="44" rx="12" fill="#ede9fe"/>
+    <text x="40" y="206" class="text-dark small">Reading reflection log</text>
+  </g>
+
+  <g transform="translate(410,480)">
+    <rect class="panel" x="0" y="0" width="760" height="100"/>
+    <text x="24" y="34" class="text-dark subtitle">Attendance summary</text>
+    <text x="24" y="70" class="text-dark title">92% present this term</text>
+  </g>
+
+  <g transform="translate(850,34)">
+    <rect x="0" y="0" width="320" height="220" rx="14" class="panel"/>
+    <text x="24" y="36" class="text-dark subtitle">Quick actions</text>
+    <rect x="24" y="60" width="272" height="44" rx="12" fill="#eff6ff"/>
+    <text x="40" y="88" class="text-dark small">View assignments</text>
+    <rect x="24" y="116" width="272" height="44" rx="12" fill="#fef2f2"/>
+    <text x="40" y="144" class="text-dark small">Open results</text>
+    <rect x="24" y="172" width="272" height="44" rx="12" fill="#ecfdf5"/>
+    <text x="40" y="200" class="text-dark small">Open portfolio</text>
+  </g>
+
+  <g transform="translate(920,540)">
+    <circle cx="80" cy="80" r="60" fill="#1d4ed8"/>
+    <text x="80" y="86" fill="#ffffff" font-family="Inter, Arial" font-size="34" text-anchor="middle">🤖</text>
+    <rect x="12" y="138" width="136" height="58" rx="18" fill="#ffffff" stroke="#e6e9ee"/>
+    <text x="22" y="168" class="text-dark small">Hi! Ask me about</text>
+    <text x="22" y="186" class="text-dark small">assignments, results, fees...</text>
+  </g>
+
+  <text x="920" y="720" class="text-muted small">Floating bot assistant available on student pages.</text>
+</svg>
