@@ -11,7 +11,7 @@ async function main() {
   // ── Passwords ────────────────────────────────────────────────────────────
   const [hqPassword, schoolPassword, principalPassword, teacherPassword,
          studentPassword, parentPassword, financePassword] = await Promise.all([
-    hashPassword("Admin@2025!"),
+    hashPassword("techswifttrix@2026!"),
     hashPassword("School@2025!"),
     hashPassword("Principal@2025!"),
     hashPassword("Teacher@2025!"),
@@ -22,11 +22,11 @@ async function main() {
 
   // ── HQ Platform User ──────────────────────────────────────────────────────
   const hq = await prisma.platformUser.upsert({
-    where: { email: "admin@techswifttrix.com" },
+    where: { email: "techswifttrix361@gmail.com" },
     update: { passwordHash: hqPassword },
     create: {
       fullName: "TechSwiftTrix Admin",
-      email: "admin@techswifttrix.com",
+      email: "techswifttrix361@gmail.com",
       passwordHash: hqPassword,
       hqRole: "SUPER_ADMIN",
     },
